@@ -9,11 +9,11 @@ const { v4: uuidv4 } = require('uuid');
 require('dotenv').config({ path: './src/config/.env' });
 
 // ─── CONFIG — edit these ────────────────────────────────────────────────────
-const BUSINESS_NAME        = 'Test Business 1'; // Name of the business
-const SUPER_ADMIN_EMAIL    = 'superadmin@billify.lk';
+const BUSINESS_NAME = 'test-business-1'; // Use slug format since frontend converts it!
+const SUPER_ADMIN_EMAIL = 'superadmin@billify.lk';
 const SUPER_ADMIN_PASSWORD = 'Admin@123';
 const FIRST_NAME = 'Admin';
-const LAST_NAME  = 'Billify';
+const LAST_NAME = 'Billify';
 // ────────────────────────────────────────────────────────────────────────────
 
 async function run() {
@@ -71,6 +71,6 @@ async function run() {
 }
 
 run().catch(err => {
-  console.error('❌ Error:', err.message);
+  console.error('Error:', err.message);
   process.exit(1);
 });
