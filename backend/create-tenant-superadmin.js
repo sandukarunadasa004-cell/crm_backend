@@ -17,14 +17,18 @@ const LAST_NAME  = 'Billify';
 // ────────────────────────────────────────────────────────────────────────────
 
 async function run() {
-  const { User } = require('./src/models');
+  const { User, sequelize } = require('./src/models');
+
+  console.log('Synchronizing database tables...');
+  await sequelize.sync({ alter: true });
+  console.log('Tables synchronized!');
 
   // Check if one already exists
   const existing = await User.findOne({
     where: { business_id: TENANT_ID, role: 'super_admin' }
   });
   if (existing) {
-    console.log('⚠️  A Super Admin already exists for this tenant:', existing.email);
+    console.log('A Super Admin already exists for this tenant:', existing.email);
     process.exit(0);
   }
 
@@ -43,7 +47,7 @@ async function run() {
     status: 'active',
   });
 
-  console.log('✅ Super Admin created successfully!');
+  console.log(' Super Admin created successfully!');
   console.log('   Email   :', user.email);
   console.log('   Password:', SUPER_ADMIN_PASSWORD);
   console.log('   Tenant  :', TENANT_ID);
