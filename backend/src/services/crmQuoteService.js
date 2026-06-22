@@ -69,8 +69,8 @@ const crmQuoteService = {
         tenant_id: tenantId,
         quote_no,
         customer_id,
-        lead_id,
-        deal_id,
+        lead_id: lead_id || null,
+        deal_id: deal_id || null,
         title,
         status: status || 'draft',
         valid_until: valid_until || null,
@@ -117,6 +117,9 @@ const crmQuoteService = {
     delete updateData.id;
     delete updateData.tenant_id;
     delete updateData.quote_no;
+
+    if (updateData.deal_id === '') updateData.deal_id = null;
+    if (updateData.lead_id === '') updateData.lead_id = null;
 
     if (updateData.discount_amount !== undefined) {
       updateData.discount_lkr = updateData.discount_amount;
