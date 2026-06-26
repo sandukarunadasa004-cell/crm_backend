@@ -111,7 +111,7 @@ const crmInboxService = {
           direction: 'inbound',
           title: item.title,
           body: item.body,
-          timestamp: item.created_at,
+          timestamp: item.createdAt || item.created_at,
           read_at: item.read_at,
           link: item.link,
           level: item.type 

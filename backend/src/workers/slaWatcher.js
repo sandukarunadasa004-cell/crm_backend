@@ -52,7 +52,7 @@ class SlaWatcher {
           const notification = await CrmNotification.create({
             tenant_id: ticket.tenant_id,
             user_id: targetUserId,
-            title: `SLA Breach: Ticket ${ticket.ticket_number}`,
+            title: `Action Required: Ticket #${ticket.ticket_no} Overdue`,
             body: `Ticket "${ticket.subject}" has exceeded its SLA time limit and is now overdue.`,
             type: 'warning',
             link: `/crm/tickets`
