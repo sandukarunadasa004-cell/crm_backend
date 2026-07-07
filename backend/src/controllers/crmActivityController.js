@@ -183,7 +183,8 @@ const crmActivityController = {
         tenantId: req.tenantId,
         related_type,
         related_id,
-        overdue
+        overdue,
+        userId: req.user.id,
       });
       return sendSuccess(res, activities, 'Activities retrieved successfully.');
     } catch (error) {
