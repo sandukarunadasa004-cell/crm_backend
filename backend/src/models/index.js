@@ -54,6 +54,7 @@ const CrmDealAutomationRule = require('./CrmDealAutomationRule')(sequelize);
 const CrmCustomField = require('./CrmCustomField')(sequelize);
 const CrmShopProfile = require('./CrmShopProfile')(sequelize);
 const Product = require('./Product')(sequelize);
+const CrmTodo = require('./CrmTodo')(sequelize);
 
 const Bill = require('./pos/Bill')(sequelize);
 const BillPayment = require('./pos/BillPayment')(sequelize);
@@ -89,6 +90,7 @@ const db = {
   CrmCustomField,
   CrmShopProfile,
   Product,
+  CrmTodo,
   Bill,
   BillPayment,
   BillItem,
@@ -102,6 +104,10 @@ User.belongsTo(Tenant, { foreignKey: 'business_id', as: 'tenant' });
 
 User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refreshTokens' });
 RefreshToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+CrmTodo.belongsTo(Tenant, { foreignKey: 'tenant_id' });
+CrmTodo.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(CrmTodo, { foreignKey: 'user_id', as: 'todos' });
 
 CrmCustomer.belongsTo(Tenant, { foreignKey: 'tenant_id' });
 CrmCustomer.belongsTo(PosCustomer, { foreignKey: 'billify_customer_id', as: 'posCustomer' });

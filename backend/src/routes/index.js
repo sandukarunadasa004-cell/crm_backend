@@ -33,5 +33,6 @@ router.use('/crm/custom-fields', require('./crmCustomFields'));
 router.use('/crm/shop-profile', require('./crmShopProfile'));
 router.use('/crm/inbox', require('./crmInbox'));
 router.use('/crm/notifications', require('./crmNotifications'));
+router.use('/crm/todos', require('./crmTodos'));
 
 module.exports = router;
