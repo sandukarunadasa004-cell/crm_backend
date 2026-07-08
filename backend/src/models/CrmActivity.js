@@ -10,7 +10,6 @@ module.exports = (sequelize) => {
     related_id: {
       type: DataTypes.UUID, allowNull: true },
     activity_type: { type: DataTypes.ENUM('call', 'email', 'meeting', 'task', 'note', 'follow_up', 'system'), allowNull: false },
-    visibility: { type: DataTypes.ENUM('public', 'private'), defaultValue: 'public', allowNull: false },
     title: { type: DataTypes.STRING(255), allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: true },
     due_at: { type: DataTypes.DATE, allowNull: true },
