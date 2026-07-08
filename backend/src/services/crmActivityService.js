@@ -144,8 +144,8 @@ const crmActivityService = {
       description,
       due_at,
       owner_id: owner_id || userId,
-      related_type: related_type || 'system',
-      related_id: related_id || 1, 
+      related_type: related_type || null,
+      related_id: related_id || null, 
       visibility: visibility || 'public',
     });
 
