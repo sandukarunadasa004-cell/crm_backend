@@ -55,6 +55,7 @@ const CrmCustomField = require('./CrmCustomField')(sequelize);
 const CrmShopProfile = require('./CrmShopProfile')(sequelize);
 const Product = require('./Product')(sequelize);
 const CrmTodo = require('./CrmTodo')(sequelize);
+const CrmLeadAssignee = require('./CrmLeadAssignee')(sequelize);
 
 const Bill = require('./pos/Bill')(sequelize);
 const BillPayment = require('./pos/BillPayment')(sequelize);
@@ -91,6 +92,7 @@ const db = {
   CrmShopProfile,
   Product,
   CrmTodo,
+  CrmLeadAssignee,
   Bill,
   BillPayment,
   BillItem,
@@ -127,6 +129,12 @@ Category.hasMany(Product, { foreignKey: 'category_id', as: 'products' });
 CrmLead.belongsTo(CrmCustomer, { foreignKey: 'customer_id', as: 'customer' });
 CrmLead.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
 CrmCustomer.hasMany(CrmLead, { foreignKey: 'customer_id', as: 'leads' });
+
+// Lead assignees (Many-to-Many)
+CrmLead.belongsToMany(User, { through: CrmLeadAssignee, foreignKey: 'lead_id', otherKey: 'user_id', as: 'assignees' });
+User.belongsToMany(CrmLead, { through: CrmLeadAssignee, foreignKey: 'user_id', otherKey: 'lead_id', as: 'assignedLeads' });
+CrmLeadAssignee.belongsTo(CrmLead, { foreignKey: 'lead_id', as: 'lead' });
+CrmLeadAssignee.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 CrmDeal.belongsTo(CrmCustomer, { foreignKey: 'customer_id', as: 'customer' });
 CrmDeal.belongsTo(CrmLead, { foreignKey: 'lead_id', as: 'lead' });

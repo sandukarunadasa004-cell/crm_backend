@@ -5,7 +5,7 @@ require('dotenv').config();
 const http = require('http');
 const app = require('./app');
 const config = require('./config/app');
-const { sequelize, CrmTodo } = require('./models');
+const { sequelize, CrmTodo, CrmLeadAssignee } = require('./models');
 const { initSocket } = require('./socket');
 const slaWatcher = require('./workers/slaWatcher');
 
@@ -28,6 +28,10 @@ const startServer = async () => {
     // Auto-create crm_todos table if it doesn't exist
     await CrmTodo.sync({ alter: true });
     console.log('✅ Checked/Synchronized crm_todos table schema.');
+
+    // Auto-create crm_lead_assignees junction table
+    await CrmLeadAssignee.sync({ alter: true });
+    console.log('✅ Checked/Synchronized crm_lead_assignees table schema.');
 
     
     

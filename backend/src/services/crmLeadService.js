@@ -1,7 +1,7 @@
 'use strict';
 
 const { Op } = require('sequelize');
-const { CrmLead, CrmCustomer, CrmDeal, User } = require('../models');
+const { CrmLead, CrmCustomer, CrmDeal, User, CrmLeadAssignee } = require('../models');
 
 const crmLeadService = {
   async getAllLeads({ tenantId, limit, offset, search, status, source, owner_id }) {
@@ -29,7 +29,8 @@ const crmLeadService = {
       where: whereClause,
       include: [
         { model: User, as: 'owner', attributes: ['id', 'first_name', 'last_name', 'email'] },
-        { model: CrmCustomer, as: 'customer', attributes: ['id', 'name'] }
+        { model: CrmCustomer, as: 'customer', attributes: ['id', 'name'] },
+        { model: User, as: 'assignees', attributes: ['id', 'first_name', 'last_name', 'email'], through: { attributes: [] } }
       ],
       limit,
       offset,
@@ -44,7 +45,8 @@ const crmLeadService = {
       where: { id: leadId, tenant_id: tenantId },
       include: [
         { model: User, as: 'owner', attributes: ['id', 'first_name', 'last_name', 'email'] },
-        { model: CrmCustomer, as: 'customer', attributes: ['id', 'name'] }
+        { model: CrmCustomer, as: 'customer', attributes: ['id', 'name'] },
+        { model: User, as: 'assignees', attributes: ['id', 'first_name', 'last_name', 'email'], through: { attributes: [] } }
       ]
     });
 
@@ -54,7 +56,7 @@ const crmLeadService = {
   },
 
   async createLead({ tenantId, data, userId }) {
-    const { name, email, phone, company_name, source, interest, estimated_value_lkr, owner_id, next_follow_up_at, notes, customer_id, custom_fields, temperature } = data;
+    const { name, email, phone, company_name, source, interest, estimated_value_lkr, owner_id, next_follow_up_at, notes, customer_id, custom_fields, temperature, assignee_ids } = data;
 
     if (!name) throw new Error('Lead name is required.');
 
@@ -77,11 +79,22 @@ const crmLeadService = {
       created_by: userId
     });
 
+    // Save assignees if provided
+    if (Array.isArray(assignee_ids) && assignee_ids.length > 0) {
+      const assigneeRows = assignee_ids
+        .filter(uid => uid && uid !== (owner_id || userId)) // exclude owner from assignees list
+        .map(uid => ({ lead_id: newLead.id, user_id: uid, tenant_id: tenantId }));
+      if (assigneeRows.length > 0) {
+        await CrmLeadAssignee.bulkCreate(assigneeRows, { ignoreDuplicates: true });
+      }
+    }
+
     const leadWithAssociations = await CrmLead.findOne({
       where: { id: newLead.id, tenant_id: tenantId },
       include: [
         { model: User, as: 'owner', attributes: ['id', 'first_name', 'last_name', 'email'] },
-        { model: CrmCustomer, as: 'customer', attributes: ['id', 'name'] }
+        { model: CrmCustomer, as: 'customer', attributes: ['id', 'name'] },
+        { model: User, as: 'assignees', attributes: ['id', 'first_name', 'last_name', 'email'], through: { attributes: [] } }
       ]
     });
 
@@ -92,15 +105,27 @@ const crmLeadService = {
     const lead = await CrmLead.findOne({ where: { id: leadId, tenant_id: tenantId } });
     if (!lead) throw new Error('Lead not found.');
 
-    delete updateData.id;
-    delete updateData.tenant_id;
+    // Extract assignee_ids before stripping from the model update
+    const { assignee_ids, ...modelData } = updateData;
 
-    if (updateData.custom_fields !== undefined) {
-      lead.custom_fields = updateData.custom_fields;
+    delete modelData.id;
+    delete modelData.tenant_id;
+
+    if (modelData.custom_fields !== undefined) {
+      lead.custom_fields = modelData.custom_fields;
     }
 
     const beforeData = lead.toJSON();
-    await lead.update(updateData);
+    await lead.update(modelData);
+
+    // Replace all assignees if assignee_ids was provided in the payload
+    if (Array.isArray(assignee_ids)) {
+      await CrmLeadAssignee.destroy({ where: { lead_id: leadId } });
+      if (assignee_ids.length > 0) {
+        const assigneeRows = assignee_ids.map(uid => ({ lead_id: leadId, user_id: uid, tenant_id: tenantId }));
+        await CrmLeadAssignee.bulkCreate(assigneeRows, { ignoreDuplicates: true });
+      }
+    }
 
     return { lead, beforeData };
   },
