@@ -20,7 +20,9 @@ const crmLeadController = {
         search,
         status,
         source,
-        owner_id
+        owner_id,
+        userRole: req.user.role,
+        userId: req.user.id
       });
 
       const paginationMeta = getPaginationMeta(count, page, limit);

@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 const { CrmLead, CrmCustomer, CrmDeal, User, CrmLeadAssignee } = require('../models');
 
 const crmLeadService = {
-  async getAllLeads({ tenantId, limit, offset, search, status, source, owner_id }) {
+  async getAllLeads({ tenantId, limit, offset, search, status, source, owner_id, userRole, userId }) {
     const whereClause = { tenant_id: tenantId };
 
     // 'active' is a virtual status meaning all non-converted leads
@@ -25,13 +25,44 @@ const crmLeadService = {
       ];
     }
 
+    const includeOptions = [
+      { model: User, as: 'owner', attributes: ['id', 'first_name', 'last_name', 'email'] },
+      { model: CrmCustomer, as: 'customer', attributes: ['id', 'name'] },
+      { model: User, as: 'assignees', attributes: ['id', 'first_name', 'last_name', 'email'], through: { attributes: [] } }
+    ];
+
+    // RBAC: If the user is not an admin or manager, restrict leads to those they own or are assigned to.
+    if (userRole && !['admin', 'manager'].includes(userRole) && userId) {
+      // Find all lead IDs assigned to this user in the junction table
+      const assignedLeadRows = await CrmLeadAssignee.findAll({
+        where: { user_id: userId, tenant_id: tenantId },
+        attributes: ['lead_id']
+      });
+      const assignedLeadIds = assignedLeadRows.map(r => r.lead_id);
+
+      // Add to whereClause: owner_id is me OR id is in assignedLeadIds
+      // If there's an existing Op.or (from search), we use Op.and
+      const accessCondition = {
+        [Op.or]: [
+          { owner_id: userId },
+          { id: { [Op.in]: assignedLeadIds } }
+        ]
+      };
+
+      if (whereClause[Op.or]) {
+        whereClause[Op.and] = [
+          { [Op.or]: whereClause[Op.or] },
+          accessCondition
+        ];
+        delete whereClause[Op.or];
+      } else {
+        whereClause[Op.or] = accessCondition[Op.or];
+      }
+    }
+
     const { count, rows } = await CrmLead.findAndCountAll({
       where: whereClause,
-      include: [
-        { model: User, as: 'owner', attributes: ['id', 'first_name', 'last_name', 'email'] },
-        { model: CrmCustomer, as: 'customer', attributes: ['id', 'name'] },
-        { model: User, as: 'assignees', attributes: ['id', 'first_name', 'last_name', 'email'], through: { attributes: [] } }
-      ],
+      include: includeOptions,
       limit,
       offset,
       order: [['created_at', 'DESC']]
