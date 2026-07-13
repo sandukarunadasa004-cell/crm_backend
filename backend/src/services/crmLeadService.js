@@ -6,8 +6,14 @@ const { CrmLead, CrmCustomer, CrmDeal, User } = require('../models');
 const crmLeadService = {
   async getAllLeads({ tenantId, limit, offset, search, status, source, owner_id }) {
     const whereClause = { tenant_id: tenantId };
-    
-    if (status) whereClause.status = status;
+
+    // 'active' is a virtual status meaning all non-converted leads
+    if (status === 'active') {
+      whereClause.status = { [Op.ne]: 'converted' };
+    } else if (status) {
+      whereClause.status = status;
+    }
+
     if (source) whereClause.source = source;
     if (owner_id) whereClause.owner_id = owner_id;
 
