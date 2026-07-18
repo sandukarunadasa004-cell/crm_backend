@@ -32,6 +32,15 @@
   var KEY = '0e5230cd84120bff1ed19a4f44f324a1f1c1c73b158145268ee4cb66248fd7c8';
   var TKEY = KEY; // used as x-tenant-id when the route is /public/support/*
   var widget = document.getElementById('crm-support-widget');
+  var currentSocket = null;
+
+  function loadSocketIo(callback) {
+    if (window.io) return callback();
+    var script = document.createElement('script');
+    script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+    script.onload = callback;
+    document.head.appendChild(script);
+  }
 
   widget.innerHTML = '<div class="crm-tabs">'
     + '<button class="crm-tab-btn active" data-tab="submit">Submit a Ticket</button>'
@@ -127,6 +136,7 @@
       if (res.ok && json.success) {
         renderTicket(json.data, resultEl);
         resultEl.style.display = 'block';
+        connectSocket(json.data.ticket_no);
       } else {
         errEl.style.display = 'block';
         errEl.textContent = json.message || 'Ticket not found. Please check the reference number.';
@@ -137,6 +147,32 @@
     } finally {
       checkBtn.disabled = false; checkBtn.textContent = 'Check';
     }
+  }
+
+  function connectSocket(ticketNo) {
+    loadSocketIo(function() {
+      if (currentSocket) currentSocket.disconnect();
+      var socketUrl = API.replace(/\/api$/, '');
+      currentSocket = io(socketUrl, {
+        query: { apiKey: KEY, ticketNo: ticketNo }
+      });
+      currentSocket.on('ticket:message', function(data) {
+        var thread = document.querySelector('.crm-thread');
+        if (thread) {
+          var m = data.message;
+          var isAgent = !!m.sender_user_id;
+          var who = isAgent ? (m.sender_name || 'Support Agent') : (m.sender_name || 'You');
+          var time = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+          var html = '<div class="crm-msg ' + (isAgent ? 'agent' : 'customer') + '">'
+            + '<div class="crm-msg-meta">' + who + ' &middot; ' + time + '</div>'
+            + '<div>' + (m.message || '').replace(/\n/g, '<br>') + '</div>'
+            + '</div>';
+          var noReplies = thread.querySelector('p');
+          if (noReplies) noReplies.remove();
+          thread.insertAdjacentHTML('beforeend', html);
+        }
+      });
+    });
   }
 
   function renderTicket(ticket, container) {
@@ -160,7 +196,34 @@
       + '</div>'
       + '<div class="crm-thread">'
       + (msgs || '<p style="color:#6b7280;font-size:14px;">No replies yet. Our team will respond soon.</p>')
-      + '</div>';
+      + '</div>'
+      + '<form id="crm-reply-form" style="margin-top:16px;">'
+      +   '<textarea name="message" rows="3" placeholder="Type your reply..." required></textarea>'
+      +   '<button type="submit" style="margin-top:8px;">Send Reply</button>'
+      + '</form>';
+
+    var replyForm = document.getElementById('crm-reply-form');
+    replyForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var btn = this.querySelector('button');
+      btn.disabled = true; btn.textContent = 'Sending...';
+      var data = Object.fromEntries(new FormData(this).entries());
+      try {
+        var res = await fetch(API + '/public/tickets/' + encodeURIComponent(ticket.ticket_no) + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': KEY },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+           this.reset();
+        } else {
+           alert('Failed to send reply. Please try again.');
+        }
+      } catch(ex) {
+         alert('Network error. Please try again.');
+      }
+      btn.disabled = false; btn.textContent = 'Send Reply';
+    });
   }
 })();
 </script>
