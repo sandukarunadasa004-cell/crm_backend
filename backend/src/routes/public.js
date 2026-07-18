@@ -44,5 +44,6 @@ setInterval(() => {
 
 router.post('/tickets', rateLimiter, publicTicketController.submitTicket);
 router.get('/tickets/:ticket_no', publicTicketController.getTicket);
+router.post('/tickets/:ticket_no/messages', rateLimiter, publicTicketController.addMessage);
 
 module.exports = router;

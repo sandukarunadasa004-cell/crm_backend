@@ -2,7 +2,7 @@
 
 const { Op } = require('sequelize');
 const { CrmTicket, CrmTicketMessage, CrmCustomer, User } = require('../models');
-const { emitToTenant } = require('../socket');
+const { emitToTenant, emitToTicket } = require('../socket');
 const crmSlaService = require('./crmSlaService');
 
 const crmTicketService = {
@@ -128,7 +128,9 @@ const crmTicketService = {
       emitToTenant(tenantId, 'ticket:updated', ticket);
     }
 
-    emitToTenant(tenantId, 'ticket:message', { ticketId: ticket.id, message: newMessage });
+    const emitData = { ticketId: ticket.id, message: newMessage };
+    emitToTenant(tenantId, 'ticket:message', emitData);
+    if (!is_internal) emitToTicket(ticket.id, 'ticket:message', emitData);
 
     return newMessage;
   },

@@ -2,7 +2,7 @@
 
 const { CrmShopProfile, CrmCustomer, CrmTicket, CrmTicketMessage } = require('../models');
 const { sendSuccess, sendError } = require('../utils/response');
-const { emitToTenant } = require('../socket');
+const { emitToTenant, emitToTicket } = require('../socket');
 const crmSlaService = require('../services/crmSlaService');
 
 const publicTicketController = {
@@ -130,6 +130,44 @@ const publicTicketController = {
       return sendError(res, 'Failed to fetch ticket.', 500);
     }
   },
+  async addMessage(req, res) {
+    try {
+      const apiKey = req.headers['x-api-key'];
+      if (!apiKey) return sendError(res, 'API key is required.', 401);
+
+      const shopProfile = await CrmShopProfile.findOne({ where: { public_api_key: apiKey } });
+      if (!shopProfile) return sendError(res, 'Invalid API key.', 401);
+
+      const tenantId = shopProfile.tenant_id;
+      const { message, sender_name } = req.body;
+      if (!message) return sendError(res, 'Message is required.', 400);
+
+      const ticket = await CrmTicket.findOne({ where: { ticket_no: req.params.ticket_no, tenant_id: tenantId } });
+      if (!ticket) return sendError(res, 'Ticket not found.', 404);
+
+      const newMessage = await CrmTicketMessage.create({
+        tenant_id: tenantId,
+        ticket_id: ticket.id,
+        sender_name: sender_name || 'Customer', 
+        message,
+        is_internal: false
+      });
+
+      if (ticket.status === 'resolved' || ticket.status === 'closed') {
+        await ticket.update({ status: 'open' });
+        emitToTenant(tenantId, 'ticket:updated', ticket);
+      }
+
+      const emitData = { ticketId: ticket.id, message: newMessage };
+      emitToTenant(tenantId, 'ticket:message', emitData);
+      emitToTicket(ticket.id, 'ticket:message', emitData);
+
+      return sendSuccess(res, newMessage, 'Message added successfully.', 201);
+    } catch (error) {
+      console.error('Error adding public message:', error);
+      return sendError(res, 'Failed to add message.', 500);
+    }
+  }
 };
 
 module.exports = publicTicketController;
