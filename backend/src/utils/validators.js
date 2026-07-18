@@ -17,8 +17,14 @@ function isValidEmail(email) {
  */
 function isValidPhone(phone) {
   if (!phone || !phone.trim()) return true;
-  const phoneRegex = /^[+]?[\d\s-]{10,20}$/;
-  return phoneRegex.test(phone.trim());
+  const sanitized = phone.trim();
+  
+  // 1. Must contain ONLY numbers, spaces, hyphens, or a leading plus. NO letters.
+  if (!/^[+]?[\d\s-]+$/.test(sanitized)) return false;
+  
+  // 2. Count the actual digits. Real phone numbers are 10 to 12 digits.
+  const digitCount = sanitized.replace(/\D/g, '').length;
+  return digitCount >= 10 && digitCount <= 12;
 }
 
 module.exports = {
