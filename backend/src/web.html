@@ -1,0 +1,80 @@
+<!-- Billify CRM Support Widget -->
+<!-- Paste this anywhere in your website's HTML -->
+<div id="crm-support-widget"></div>
+
+<style>
+  #crm-support-widget form {
+    display: flex; flex-direction: column; gap: 12px;
+    max-width: 480px; font-family: sans-serif;
+  }
+  #crm-support-widget input,
+  #crm-support-widget textarea {
+    padding: 10px 14px; border: 1px solid #d1d5db;
+    border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box;
+  }
+  #crm-support-widget button {
+    padding: 10px 20px; background: #8b5cf6; color: #fff;
+    border: none; border-radius: 6px; font-size: 14px;
+    cursor: pointer; font-weight: 600;
+  }
+  #crm-support-widget button:hover { background: #7c3aed; }
+  #crm-support-widget .crm-success {
+    padding: 12px 16px; background: #d1fae5; border-radius: 6px;
+    color: #065f46; font-size: 14px; display: none;
+  }
+  #crm-support-widget .crm-error {
+    padding: 12px 16px; background: #fee2e2; border-radius: 6px;
+    color: #991b1b; font-size: 14px; display: none;
+  }
+</style>
+
+<script>
+(function() {
+  var widget = document.getElementById('crm-support-widget');
+  widget.innerHTML = `
+    <h3 style="margin:0 0 16px;font-size:18px;">Submit a Support Ticket</h3>
+    <form id="crm-ticket-form">
+      <input name="name" placeholder="Your Name *" required />
+      <input name="email" type="email" placeholder="Email Address *" required />
+      <input name="phone" placeholder="Phone Number (optional)" />
+      <input name="subject" placeholder="Subject *" required />
+      <textarea name="message" rows="5" placeholder="Describe your issue *" required></textarea>
+      <button type="submit">Submit Ticket</button>
+    </form>
+    <div class="crm-success" id="crm-success-msg"></div>
+    <div class="crm-error" id="crm-error-msg"></div>
+  `;
+
+  document.getElementById('crm-ticket-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var btn = this.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Submitting...';
+    var data = Object.fromEntries(new FormData(this).entries());
+    try {
+      var res = await fetch('https://aware-comfort-production-403f.up.railway.app/api/public/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': '0e5230cd84120bff1ed19a4f44f324a1f1c1c73b158145268ee4cb66248fd7c8' },
+        body: JSON.stringify(data)
+      });
+      var json = await res.json();
+      if (res.ok && json.success) {
+        document.getElementById('crm-ticket-form').style.display = 'none';
+        var s = document.getElementById('crm-success-msg');
+        s.style.display = 'block';
+        s.textContent = '✓ Ticket submitted! Your reference: ' + json.data.ticket_no;
+      } else {
+        var err = document.getElementById('crm-error-msg');
+        err.style.display = 'block';
+        err.textContent = json.message || 'Something went wrong. Please try again.';
+        btn.disabled = false; btn.textContent = 'Submit Ticket';
+      }
+    } catch(ex) {
+      var err = document.getElementById('crm-error-msg');
+      err.style.display = 'block';
+      err.textContent = 'Network error. Please try again.';
+      btn.disabled = false; btn.textContent = 'Submit Ticket';
+    }
+  });
+})();
+</script>
+<!-- End Billify CRM Support Widget -->

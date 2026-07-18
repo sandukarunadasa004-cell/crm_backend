@@ -22,8 +22,8 @@ const allowedOrigins = (config.cors.origin || 'https://billify-crm-frontend.verc
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow server-to-server requests (no origin header) e.g. Postman, curl
     if (!origin) return callback(null, true);
+    if (origin === 'null') return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     callback(new Error(`CORS: Origin '${origin}' not allowed`));
   },
@@ -32,9 +32,17 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID'],
 };
 
-// Handle OPTIONS preflight for ALL routes before any other middleware
-app.options('*', cors(corsOptions));
-app.use(cors(corsOptions));
+// ─── CORS must be FIRST — before helmet and everything else ───────────────────
+const dynamicCors = (req, res, next) => {
+  if (req.path.startsWith('/api/public')) {
+    cors({ origin: '*' })(req, res, next);
+  } else {
+    cors(corsOptions)(req, res, next);
+  }
+};
+
+app.options('*', dynamicCors);
+app.use(dynamicCors);
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.use(helmet());
