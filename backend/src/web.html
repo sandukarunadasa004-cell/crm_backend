@@ -3,78 +3,166 @@
 <div id="crm-support-widget"></div>
 
 <style>
-  #crm-support-widget form {
-    display: flex; flex-direction: column; gap: 12px;
-    max-width: 480px; font-family: sans-serif;
-  }
-  #crm-support-widget input,
-  #crm-support-widget textarea {
-    padding: 10px 14px; border: 1px solid #d1d5db;
-    border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box;
-  }
-  #crm-support-widget button {
-    padding: 10px 20px; background: #8b5cf6; color: #fff;
-    border: none; border-radius: 6px; font-size: 14px;
-    cursor: pointer; font-weight: 600;
-  }
-  #crm-support-widget button:hover { background: #7c3aed; }
-  #crm-support-widget .crm-success {
-    padding: 12px 16px; background: #d1fae5; border-radius: 6px;
-    color: #065f46; font-size: 14px; display: none;
-  }
-  #crm-support-widget .crm-error {
-    padding: 12px 16px; background: #fee2e2; border-radius: 6px;
-    color: #991b1b; font-size: 14px; display: none;
-  }
+  #crm-support-widget { max-width: 520px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .crm-tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; }
+  .crm-tab-btn { padding: 10px 20px; background: none; border: none; font-size: 14px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .crm-tab-btn.active { color: #8b5cf6; border-bottom-color: #8b5cf6; }
+  .crm-tab-panel { display: none; }
+  .crm-tab-panel.active { display: block; }
+  #crm-support-widget form { display: flex; flex-direction: column; gap: 12px; }
+  #crm-support-widget input, #crm-support-widget textarea { padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box; }
+  #crm-support-widget button[type=submit], .crm-check-btn { padding: 10px 20px; background: #8b5cf6; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  #crm-support-widget button:hover, .crm-check-btn:hover { background: #7c3aed; }
+  .crm-success { padding: 12px 16px; background: #d1fae5; border-radius: 6px; color: #065f46; font-size: 14px; display: none; margin-bottom: 12px; }
+  .crm-error { padding: 12px 16px; background: #fee2e2; border-radius: 6px; color: #991b1b; font-size: 14px; display: none; margin-bottom: 12px; }
+  .crm-thread { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .crm-msg { padding: 12px 14px; border-radius: 8px; font-size: 14px; line-height: 1.5; }
+  .crm-msg.agent { background: #ede9fe; color: #3b0764; align-self: flex-start; max-width: 85%; border-left: 3px solid #8b5cf6; }
+  .crm-msg.customer { background: #f3f4f6; color: #111827; align-self: flex-end; max-width: 85%; border-right: 3px solid #9ca3af; }
+  .crm-msg .crm-msg-meta { font-size: 11px; color: #6b7280; margin-bottom: 4px; font-weight: 600; }
+  .crm-status-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+  .crm-ticket-info { margin-bottom: 16px; padding: 12px 14px; background: #f9fafb; border-radius: 8px; font-size: 14px; }
+  .crm-lookup-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .crm-lookup-row input { flex: 1; }
 </style>
 
 <script>
 (function() {
+  var API = 'https://aware-comfort-production-403f.up.railway.app/api';
+  var KEY = '0e5230cd84120bff1ed19a4f44f324a1f1c1c73b158145268ee4cb66248fd7c8';
+  var TKEY = KEY; // used as x-tenant-id when the route is /public/support/*
   var widget = document.getElementById('crm-support-widget');
-  widget.innerHTML = `
-    <h3 style="margin:0 0 16px;font-size:18px;">Submit a Support Ticket</h3>
-    <form id="crm-ticket-form">
-      <input name="name" placeholder="Your Name *" required />
-      <input name="email" type="email" placeholder="Email Address *" required />
-      <input name="phone" placeholder="Phone Number (optional)" />
-      <input name="subject" placeholder="Subject *" required />
-      <textarea name="message" rows="5" placeholder="Describe your issue *" required></textarea>
-      <button type="submit">Submit Ticket</button>
-    </form>
-    <div class="crm-success" id="crm-success-msg"></div>
-    <div class="crm-error" id="crm-error-msg"></div>
-  `;
 
+  widget.innerHTML = '<div class="crm-tabs">'
+    + '<button class="crm-tab-btn active" data-tab="submit">Submit a Ticket</button>'
+    + '<button class="crm-tab-btn" data-tab="check">Check My Ticket</button>'
+    + '</div>'
+    + '<div class="crm-tab-panel active" id="crm-panel-submit">'
+    +   '<div class="crm-success" id="crm-success-msg"></div>'
+    +   '<div class="crm-error" id="crm-submit-err"></div>'
+    +   '<form id="crm-ticket-form">'
+    +     '<input name="name" placeholder="Your Name *" required />'
+    +     '<input name="email" type="email" placeholder="Email Address *" required />'
+    +     '<input name="phone" placeholder="Phone Number (optional)" />'
+    +     '<input name="subject" placeholder="Subject *" required />'
+    +     '<textarea name="message" rows="4" placeholder="Describe your issue *" required></textarea>'
+    +     '<button type="submit">Submit Ticket</button>'
+    +   '</form>'
+    + '</div>'
+    + '<div class="crm-tab-panel" id="crm-panel-check">'
+    +   '<div class="crm-error" id="crm-check-err"></div>'
+    +   '<div class="crm-lookup-row">'
+    +     '<input id="crm-tkt-input" placeholder="Enter your ticket reference e.g. TKT-00005" />'
+    +     '<button class="crm-check-btn" id="crm-check-btn">Check</button>'
+    +   '</div>'
+    +   '<div id="crm-ticket-result" style="display:none;"></div>'
+    + '</div>';
+
+  // Tab switching
+  widget.querySelectorAll('.crm-tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      widget.querySelectorAll('.crm-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      widget.querySelectorAll('.crm-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('crm-panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Submit ticket
   document.getElementById('crm-ticket-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     var btn = this.querySelector('button');
     btn.disabled = true; btn.textContent = 'Submitting...';
     var data = Object.fromEntries(new FormData(this).entries());
+    var errEl = document.getElementById('crm-submit-err');
+    errEl.style.display = 'none';
     try {
-      var res = await fetch('https://aware-comfort-production-403f.up.railway.app/api/public/tickets', {
+      var res = await fetch(API + '/public/tickets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': '0e5230cd84120bff1ed19a4f44f324a1f1c1c73b158145268ee4cb66248fd7c8' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': KEY },
         body: JSON.stringify(data)
       });
       var json = await res.json();
       if (res.ok && json.success) {
-        document.getElementById('crm-ticket-form').style.display = 'none';
+        var tktNo = json.data.ticket_no;
+        this.style.display = 'none';
         var s = document.getElementById('crm-success-msg');
         s.style.display = 'block';
-        s.textContent = '✓ Ticket submitted! Your reference: ' + json.data.ticket_no;
+        s.innerHTML = '✓ Ticket submitted! Your reference: <strong>' + tktNo + '</strong>. Switching to ticket view...';
+        document.getElementById('crm-tkt-input').value = tktNo;
+        setTimeout(function() {
+          widget.querySelector('[data-tab="check"]').click();
+          loadTicket(tktNo);
+        }, 1800);
       } else {
-        var err = document.getElementById('crm-error-msg');
-        err.style.display = 'block';
-        err.textContent = json.message || 'Something went wrong. Please try again.';
+        errEl.style.display = 'block';
+        errEl.textContent = json.message || 'Something went wrong.';
         btn.disabled = false; btn.textContent = 'Submit Ticket';
       }
     } catch(ex) {
-      var err = document.getElementById('crm-error-msg');
-      err.style.display = 'block';
-      err.textContent = 'Network error. Please try again.';
+      errEl.style.display = 'block';
+      errEl.textContent = 'Network error. Please try again.';
       btn.disabled = false; btn.textContent = 'Submit Ticket';
     }
   });
+
+  // Check ticket button
+  document.getElementById('crm-check-btn').addEventListener('click', function() {
+    var tktNo = document.getElementById('crm-tkt-input').value.trim();
+    if (tktNo) loadTicket(tktNo);
+  });
+
+  async function loadTicket(tktNo) {
+    var checkBtn = document.getElementById('crm-check-btn');
+    var errEl = document.getElementById('crm-check-err');
+    var resultEl = document.getElementById('crm-ticket-result');
+    errEl.style.display = 'none';
+    resultEl.style.display = 'none';
+    checkBtn.disabled = true; checkBtn.textContent = 'Loading...';
+    try {
+      var res = await fetch(API + '/public/tickets/' + encodeURIComponent(tktNo), {
+        headers: { 'x-api-key': KEY }
+      });
+      var json = await res.json();
+      if (res.ok && json.success) {
+        renderTicket(json.data, resultEl);
+        resultEl.style.display = 'block';
+      } else {
+        errEl.style.display = 'block';
+        errEl.textContent = json.message || 'Ticket not found. Please check the reference number.';
+      }
+    } catch(ex) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'Network error. Please try again.';
+    } finally {
+      checkBtn.disabled = false; checkBtn.textContent = 'Check';
+    }
+  }
+
+  function renderTicket(ticket, container) {
+    var statusColors = { open:'#3b82f6', in_progress:'#f59e0b', waiting_customer:'#8b5cf6', resolved:'#10b981', closed:'#6b7280' };
+    var statusLabels = { open:'Open', in_progress:'In Progress', waiting_customer:'Waiting on Customer', resolved:'Resolved', closed:'Closed' };
+    var color = statusColors[ticket.status] || '#6b7280';
+    var label = statusLabels[ticket.status] || ticket.status;
+    var msgs = (ticket.messages || []).map(function(m) {
+      var isAgent = !!m.sender_user_id;
+      var who = isAgent ? (m.sender_name || 'Support Agent') : (m.sender_name || 'You');
+      var time = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+      return '<div class="crm-msg ' + (isAgent ? 'agent' : 'customer') + '">'
+        + '<div class="crm-msg-meta">' + who + ' &middot; ' + time + '</div>'
+        + '<div>' + (m.message || '').replace(/
+/g, '<br>') + '</div>'
+        + '</div>';
+    }).join('');
+    container.innerHTML =
+      '<div class="crm-ticket-info">'
+      + '<strong>' + ticket.ticket_no + '</strong> &mdash; ' + (ticket.subject || '')
+      + '<span class="crm-status-badge" style="background:' + color + '22;color:' + color + '">' + label + '</span>'
+      + '</div>'
+      + '<div class="crm-thread">'
+      + (msgs || '<p style="color:#6b7280;font-size:14px;">No replies yet. Our team will respond soon.</p>')
+      + '</div>';
+  }
 })();
 </script>
 <!-- End Billify CRM Support Widget -->
