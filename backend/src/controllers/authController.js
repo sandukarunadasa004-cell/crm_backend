@@ -8,8 +8,8 @@ const config = require('../config/app');
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,                                        
   secure: config.app.env === 'production',               
-  sameSite: config.app.env === 'production' ? 'Strict' : 'Lax', 
-  maxAge: 7 * 24 * 60 * 60 * 1000,                      
+  sameSite: config.app.env === 'production' ? 'None' : 'Lax', 
+  maxAge: 30 * 24 * 60 * 60 * 1000,                      
   path: '/',
 };
 
