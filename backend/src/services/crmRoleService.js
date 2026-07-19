@@ -5,7 +5,7 @@ const { User, RolePermission, sequelize } = require('../models');
 const permissionModules = [
   'dashboard', 'customers', 'leads', 'deals', 'quotes',
   'tickets', 'activities', 'interactions', 'documents',
-  'notifications', 'payments', 'products', 'reports', 'roles', 'audit_logs'
+  'notifications', 'payments', 'products', 'reports', 'roles'
 ];
 const permissionActions = ['view', 'create', 'update', 'delete', 'export', 'assign', 'manage'];
 
