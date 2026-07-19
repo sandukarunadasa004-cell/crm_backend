@@ -42,6 +42,11 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: 'draft',
     },
+    flag_status: {
+      type: DataTypes.ENUM('none', 'flagged', 'completed'),
+      allowNull: false,
+      defaultValue: 'none',
+    },
     subtotal_lkr: {
       type: DataTypes.DECIMAL(15, 2),
       allowNull: false,

@@ -58,6 +58,11 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: 'open',
     },
+    flag_status: {
+      type: DataTypes.ENUM('none', 'flagged', 'completed'),
+      allowNull: false,
+      defaultValue: 'none',
+    },
     won_lost_reason: {
       type: DataTypes.TEXT,
       allowNull: true,

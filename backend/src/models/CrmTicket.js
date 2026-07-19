@@ -15,6 +15,7 @@ module.exports = (sequelize) => {
     priority: { type: DataTypes.ENUM('low', 'medium', 'high', 'urgent'), allowNull: false, defaultValue: 'medium' },
     source: { type: DataTypes.ENUM('phone', 'email', 'chat', 'portal', 'social', 'other'), allowNull: false, defaultValue: 'portal' },
     status: { type: DataTypes.ENUM('open', 'in_progress', 'waiting_customer', 'resolved', 'closed'), allowNull: false, defaultValue: 'open' },
+    flag_status: { type: DataTypes.ENUM('none', 'flagged', 'completed'), allowNull: false, defaultValue: 'none' },
     assignee_id: {
       type: DataTypes.UUID, allowNull: true, references: { model: 'users', key: 'id' } },
     due_at: { type: DataTypes.DATE, allowNull: true },
