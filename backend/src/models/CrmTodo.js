@@ -9,6 +9,7 @@ module.exports = (sequelize) => {
     title: { type: DataTypes.STRING(255), allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: true },
     is_public: { type: DataTypes.BOOLEAN, defaultValue: false },
+    is_pinned: { type: DataTypes.BOOLEAN, defaultValue: false },
     completed_at: { type: DataTypes.DATE, allowNull: true },
   }, {
     tableName: 'crm_todos',

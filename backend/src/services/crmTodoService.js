@@ -17,7 +17,7 @@ const crmTodoService = {
       include: [
         { model: User, as: 'user', attributes: ['id', 'first_name', 'last_name'] }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['is_pinned', 'DESC'], ['createdAt', 'DESC']]
     });
 
     return todos.map(todo => ({
@@ -52,11 +52,12 @@ const crmTodoService = {
       throw new Error('Only the creator can update this Todo.');
     }
 
-    const { title, description, is_public, completed_at } = data;
+    const { title, description, is_public, completed_at, is_pinned } = data;
     if (title !== undefined) todo.title = title;
     if (description !== undefined) todo.description = description;
     if (is_public !== undefined) todo.is_public = is_public;
     if (completed_at !== undefined) todo.completed_at = completed_at;
+    if (is_pinned !== undefined) todo.is_pinned = is_pinned;
 
     await todo.save();
     return todo;
