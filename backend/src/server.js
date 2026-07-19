@@ -25,13 +25,9 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
 
-    // Auto-create crm_todos table if it doesn't exist
-    await CrmTodo.sync({ alter: true });
-    console.log('✅ Checked/Synchronized crm_todos table schema.');
-
-    // Auto-create crm_lead_assignees junction table
-    await CrmLeadAssignee.sync({ alter: true });
-    console.log('✅ Checked/Synchronized crm_lead_assignees table schema.');
+    // Auto-create all tables if they don't exist
+    await sequelize.sync({ alter: true });
+    console.log('✅ Synchronized all database tables.');
 
     
     
