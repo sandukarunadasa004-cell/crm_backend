@@ -142,6 +142,16 @@ const crmActivityService = {
       related_id: related_id || null, 
     });
 
+    try {
+      const user = await User.findByPk(userId);
+      if (user && user.outlook_connected) {
+        const outlookCalendarService = require('./outlookCalendarService');
+        await outlookCalendarService.pushEventToOutlook(user, activity);
+      }
+    } catch (err) {
+      console.error('Failed to sync new activity to outlook:', err);
+    }
+
     return activity;
   },
 
@@ -203,10 +213,25 @@ const crmActivityService = {
     return results;
   },
 
-  async deleteActivity({ id, tenantId }) {
+  async deleteActivity({ id, tenantId, userId }) {
     const activity = await CrmActivity.findOne({ where: { id, tenant_id: tenantId } });
     if (!activity) throw new Error('Activity not found.');
+    
+    const outlookEventId = activity.outlook_event_id;
     await activity.destroy();
+
+    try {
+      if (outlookEventId && userId) {
+        const user = await User.findByPk(userId);
+        if (user && user.outlook_connected) {
+          const outlookCalendarService = require('./outlookCalendarService');
+          await outlookCalendarService.deleteEventFromOutlook(user, outlookEventId);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to delete activity from outlook:', err);
+    }
+
     return true;
   },
 
@@ -227,6 +252,19 @@ const crmActivityService = {
     if (owner_id !== undefined) activity.owner_id = owner_id;
 
     await activity.save();
+
+    try {
+      if (data.userId) { // Passed from controller
+        const user = await User.findByPk(data.userId);
+        if (user && user.outlook_connected) {
+          const outlookCalendarService = require('./outlookCalendarService');
+          await outlookCalendarService.pushEventToOutlook(user, activity);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync updated activity to outlook:', err);
+    }
+
     return { activity, beforeData };
   }
 };

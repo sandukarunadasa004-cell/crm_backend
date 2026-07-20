@@ -14,6 +14,7 @@ module.exports = (sequelize) => {
     description: { type: DataTypes.TEXT, allowNull: true },
     due_at: { type: DataTypes.DATE, allowNull: true },
     completed_at: { type: DataTypes.DATE, allowNull: true },
+    outlook_event_id: { type: DataTypes.STRING(255), allowNull: true },
     owner_id: {
       type: DataTypes.UUID, allowNull: true, references: { model: 'users', key: 'id' } },
   }, {

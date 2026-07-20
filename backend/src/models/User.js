@@ -47,6 +47,25 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING(255),
       defaultValue: 'active',
     },
+    outlook_access_token: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    outlook_refresh_token: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    outlook_token_expiry: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    outlook_connected: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return !!this.getDataValue('outlook_refresh_token');
+      }
+    },
 
     name: {
       type: DataTypes.VIRTUAL,

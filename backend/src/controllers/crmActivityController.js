@@ -197,7 +197,7 @@ const crmActivityController = {
 
   async deleteActivity(req, res) {
     try {
-      await crmActivityService.deleteActivity({ id: req.params.id, tenantId: req.tenantId });
+      await crmActivityService.deleteActivity({ id: req.params.id, tenantId: req.tenantId, userId: req.user.id });
       return sendSuccess(res, null, 'Activity deleted successfully.');
     } catch (error) {
       console.error('Error deleting activity:', error);
@@ -236,7 +236,7 @@ const crmActivityController = {
       const { activity, beforeData } = await crmActivityService.updateActivity({
         id,
         tenantId: req.tenantId,
-        data: req.body
+        data: { ...req.body, userId: req.user.id }
       });
 
       await logAudit({
