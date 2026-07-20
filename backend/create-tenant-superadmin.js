@@ -6,7 +6,7 @@
 
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-require('dotenv').config({ path: './src/config/.env' });
+require('dotenv').config({ path: './.env' });
 
 // ─── CONFIG — edit these ────────────────────────────────────────────────────
 const BUSINESS_NAME = 'test-business-2'; // Use slug format since frontend converts it!
