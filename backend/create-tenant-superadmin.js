@@ -62,6 +62,15 @@ async function run() {
     status: 'active',
   });
 
+  // 3. Add to the new UserTenant junction table for multi-company support
+  const { UserTenant } = require('./src/models');
+  await UserTenant.create({
+    user_id: user.id,
+    tenant_id: TENANT_ID,
+    role: 'super_admin',
+    is_active: true
+  });
+
   console.log(' Super Admin created successfully!');
   console.log('   Email   :', user.email);
   console.log('   Password:', SUPER_ADMIN_PASSWORD);
