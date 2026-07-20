@@ -9,7 +9,10 @@ class OutlookCalendarService {
     this.clientId = process.env.MICROSOFT_CLIENT_ID || '0e564390-2007-400e-a2a5-363b19aa5b31';
     this.clientSecret = process.env.MICROSOFT_CLIENT_SECRET || ''; // Needs to be added to .env
     this.tenantId = process.env.MICROSOFT_TENANT_ID || 'common';
-    this.redirectUri = process.env.MICROSOFT_REDIRECT_URI || 'http://localhost:5000/api/public/outlook/callback';
+    
+    // Construct dynamic redirect URI based on APP_URL
+    const appUrl = process.env.APP_URL;
+    this.redirectUri = process.env.MICROSOFT_REDIRECT_URI || `${appUrl}/api/public/outlook/callback`;
     
     this.scopes = ['offline_access', 'Calendars.ReadWrite', 'User.Read'];
   }
