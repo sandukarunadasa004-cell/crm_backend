@@ -1,18 +1,11 @@
-/**
- * Seed script: Creates or resets BOTH super admins.
- * Run with: node create-tenant-superadmin.js
- *
- * Each super admin gets their own isolated business.
- * If the user already exists → password is RESET.
- * If the user does not exist → user is CREATED.
- */
+
 'use strict';
 
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config({ path: './.env' });
 
-// ─── SUPER ADMINS TO SEED ────────────────────────────────────────────────────
+
 const ADMINS = [
   {
     businessName: 'billify-business-1',
@@ -30,14 +23,14 @@ const ADMINS = [
     password:     'Admin@123',
   },
 ];
-// ────────────────────────────────────────────────────────────────────────────
+
 
 async function seedAdmin({ businessName, email, password }) {
   const { User, Tenant, UserTenant, CrmDealStage } = require('./src/models');
 
   console.log(`\n── Processing: ${email} ──────────────────────`);
 
-  // 1. Find or create the business
+  
   let tenant = await Tenant.findOne({ where: { name: businessName } });
   if (!tenant) {
     tenant = await Tenant.create({ id: uuidv4(), name: businessName, is_active: true });
@@ -49,7 +42,7 @@ async function seedAdmin({ businessName, email, password }) {
   const salt = await bcrypt.genSalt(12);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // 2. Find or create the user
+  
   let user = await User.findOne({ where: { email } });
   if (user) {
     user.password    = hashedPassword;
@@ -74,7 +67,7 @@ async function seedAdmin({ businessName, email, password }) {
     console.log(`  [CREATED] Super Admin: ${email}`);
   }
 
-  // 3. Ensure user is linked ONLY to their designated tenant (remove stale links)
+  
   await UserTenant.destroy({ where: { user_id: user.id } });
   await UserTenant.create({
     user_id:   user.id,
@@ -84,7 +77,7 @@ async function seedAdmin({ businessName, email, password }) {
   });
   console.log(`  [LINKED]  User → "${businessName}" only (stale links removed)`);
 
-  // 4. Seed default deal pipeline stages if none exist for this tenant
+  
   const existingStages = await CrmDealStage.count({ where: { tenant_id: tenant.id } });
   if (existingStages === 0) {
     const defaultStages = [

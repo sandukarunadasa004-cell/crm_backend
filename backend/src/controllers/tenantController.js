@@ -17,20 +17,20 @@ const tenantController = {
 
       const cleanName = name.trim();
 
-      // Check if name is already taken
+      
       const existing = await Tenant.findOne({ where: { name: cleanName }, transaction });
       if (existing) {
         return sendError(res, 'A company with this name already exists.', 400);
       }
 
-      // Create new Tenant
+      
       const tenant = await Tenant.create({
         id: uuidv4(),
         name: cleanName,
         is_active: true,
       }, { transaction });
 
-      // Link current user as super_admin
+      
       await UserTenant.create({
         user_id: req.user.id,
         tenant_id: tenant.id,
@@ -63,14 +63,14 @@ const tenantController = {
     try {
       const { id } = req.params;
       
-      // Don't allow deleting the primary system business (usually seeded)
-      // or at least prevent if it's the very first one, but for now just check if it exists
+      
+      
       const tenant = await Tenant.findOne({ where: { id } });
       if (!tenant) {
         return sendError(res, 'Company not found.', 404);
       }
       
-      // Perform soft delete
+      
       await tenant.update({ is_active: false });
 
       await logAudit({

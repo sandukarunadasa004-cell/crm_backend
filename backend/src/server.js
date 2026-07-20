@@ -25,7 +25,7 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
 
-    // Auto-create all tables if they don't exist
+    
     await sequelize.sync({ alter: true });
     console.log('✅ Synchronized all database tables.');
 

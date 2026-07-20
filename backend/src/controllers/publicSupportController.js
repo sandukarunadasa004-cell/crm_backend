@@ -7,7 +7,7 @@ const crmSlaService = require('../services/crmSlaService');
 const { isValidEmail, isValidPhone } = require('../utils/validators');
 
 const publicSupportController = {
-  // Create a new ticket from external site
+  
   async createTicket(req, res) {
     try {
       const tenantId = req.headers['x-tenant-id'];
@@ -24,7 +24,7 @@ const publicSupportController = {
       if (email && !isValidEmail(email)) return sendError(res, 'Invalid email format.', 400);
       if (phone && !isValidPhone(phone)) return sendError(res, 'Invalid phone format.', 400);
 
-      // Find or create customer based on email
+      
       let customer = await CrmCustomer.findOne({ where: { email, tenant_id: tenantId } });
       if (!customer) {
         const count = await CrmCustomer.count({ where: { tenant_id: tenantId }, paranoid: false });
@@ -39,7 +39,7 @@ const publicSupportController = {
         });
       }
 
-      // Create Ticket
+      
       const count = await CrmTicket.count({ where: { tenant_id: tenantId }, paranoid: false });
       const ticket_no = `TKT-${String(count + 1).padStart(5, '0')}`;
       const ticketPriority = priority || 'medium';
@@ -68,7 +68,7 @@ const publicSupportController = {
     }
   },
 
-  // Get a ticket and its messages
+  
   async getTicket(req, res) {
     try {
       const tenantId = req.headers['x-tenant-id'];
@@ -81,7 +81,7 @@ const publicSupportController = {
             model: CrmTicketMessage,
             as: 'messages',
             where: { is_internal: false, is_internal_note: false },
-            required: false // Don't fail if no messages
+            required: false 
           }
         ],
         order: [[{ model: CrmTicketMessage, as: 'messages' }, 'created_at', 'ASC']]
@@ -98,7 +98,7 @@ const publicSupportController = {
     }
   },
 
-  // Add a message from the customer
+  
   async addMessage(req, res) {
     try {
       const tenantId = req.headers['x-tenant-id'];
@@ -113,12 +113,12 @@ const publicSupportController = {
       const newMessage = await CrmTicketMessage.create({
         tenant_id: tenantId,
         ticket_id: ticket.id,
-        sender_name: sender_name || 'Customer', // No sender_user_id because it's a customer
+        sender_name: sender_name || 'Customer', 
         message,
         is_internal: false
       });
 
-      // If ticket is resolved/closed, reopen it
+      
       if (ticket.status === 'resolved' || ticket.status === 'closed') {
         await ticket.update({ status: 'open' });
         emitToTenant(tenantId, 'ticket:updated', ticket);

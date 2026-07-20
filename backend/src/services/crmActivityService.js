@@ -254,7 +254,7 @@ const crmActivityService = {
     await activity.save();
 
     try {
-      if (data.userId) { // Passed from controller
+      if (data.userId) { 
         const user = await User.findByPk(data.userId);
         if (user && user.outlook_connected) {
           const outlookCalendarService = require('./outlookCalendarService');

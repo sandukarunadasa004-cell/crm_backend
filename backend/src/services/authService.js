@@ -7,12 +7,8 @@ const { Op } = require('sequelize');
 
 class AuthService {
 
-  /**
-   * Step 1 of login: verify credentials, return list of companies.
-   * If only one company → auto-issue token (backward compatible).
-   */
-  async login(email, password) {
-    // Find user by email (may belong to multiple companies)
+    async login(email, password) {
+    
     const user = await User.findOne({
       where: { email, is_active: true },
     });
@@ -26,20 +22,20 @@ class AuthService {
       throw Object.assign(new Error('Invalid email or password.'), { statusCode: 401 });
     }
 
-    // Get all companies this user belongs to (via user_tenants junction)
+    
     const userTenants = await UserTenant.findAll({
       where: { user_id: user.id, is_active: true },
       include: [{ model: Tenant, as: 'tenant', where: { is_active: true }, required: true }],
     });
 
-    // Also include the primary company (business_id on user record) if not already in user_tenants
+    
     let companies = userTenants.map(ut => ({
       id: ut.tenant.id,
       name: ut.tenant.name,
       role: ut.role,
     }));
 
-    // Fall back to legacy single-tenant if user_tenants is empty
+    
     if (companies.length === 0 && user.business_id) {
       const primaryTenant = await Tenant.findOne({ where: { id: user.business_id, is_active: true } });
       if (primaryTenant) {
@@ -51,35 +47,31 @@ class AuthService {
       throw Object.assign(new Error('No active company found for this user.'), { statusCode: 403 });
     }
 
-    // If exactly one company, auto-select and issue token immediately
+    
     if (companies.length === 1) {
       const tenant = await Tenant.findByPk(companies[0].id);
       const roleInCompany = companies[0].role;
       return await this._issueTokensForUserAndTenant(user, tenant, roleInCompany);
     }
 
-    // Multiple companies → return company list, let user pick
+    
     return {
       requiresCompanySelection: true,
       userId: user.id,
-      // issue a short-lived "company selection token" so the next step is authenticated
+      
       selectionToken: this._generateSelectionToken(user.id),
       companies,
     };
   }
 
-  /**
-   * Step 2 (only called when user has multiple companies):
-   * User picks a company, we issue the real access token.
-   */
-  async selectCompany(userId, tenantId) {
+    async selectCompany(userId, tenantId) {
     const user = await User.findOne({ where: { id: userId, is_active: true } });
     if (!user) throw Object.assign(new Error('User not found.'), { statusCode: 401 });
 
     const tenant = await Tenant.findOne({ where: { id: tenantId, is_active: true } });
     if (!tenant) throw Object.assign(new Error('Company not found.'), { statusCode: 404 });
 
-    // Verify user belongs to this tenant
+    
     let roleInCompany = user.role;
     const userTenant = await UserTenant.findOne({
       where: { user_id: userId, tenant_id: tenantId, is_active: true },
@@ -92,18 +84,11 @@ class AuthService {
     return await this._issueTokensForUserAndTenant(user, tenant, roleInCompany);
   }
 
-  /**
-   * Switch company for an already-authenticated user (inline switcher).
-   * Returns a new access token with updated tenantId.
-   */
-  async switchCompany(userId, targetTenantId) {
+    async switchCompany(userId, targetTenantId) {
     return this.selectCompany(userId, targetTenantId);
   }
 
-  /**
-   * Get all companies a user can access.
-   */
-  async getUserCompanies(userId) {
+    async getUserCompanies(userId) {
     const user = await User.findOne({ where: { id: userId, is_active: true } });
     if (!user) throw Object.assign(new Error('User not found.'), { statusCode: 401 });
 
@@ -118,7 +103,7 @@ class AuthService {
       role: ut.role,
     }));
 
-    // Also include primary tenant if not in junction table
+    
     if (user.business_id && !companies.find(c => c.id === user.business_id)) {
       const primaryTenant = await Tenant.findOne({ where: { id: user.business_id, is_active: true } });
       if (primaryTenant) {
@@ -129,10 +114,7 @@ class AuthService {
     return companies;
   }
 
-  /**
-   * Internal: issue access + refresh tokens for a user+tenant combination.
-   */
-  async _issueTokensForUserAndTenant(user, tenant, roleInCompany) {
+    async _issueTokensForUserAndTenant(user, tenant, roleInCompany) {
     const rolePerms = await RolePermission.findAll({
       where: { role: roleInCompany, business_id: tenant.id },
     });
@@ -180,7 +162,7 @@ class AuthService {
     );
   }
 
-  // Keep backward compat alias
+  
   generateAccessToken(user, tenant) {
     return this._generateAccessToken(user, tenant, user.role);
   }

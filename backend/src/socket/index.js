@@ -10,7 +10,7 @@ let io = null;
 const initSocket = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: '*', // Allow public websites to connect
+      origin: '*', 
       methods: ['GET', 'POST'],
       credentials: true,
     },
@@ -19,7 +19,7 @@ const initSocket = (httpServer) => {
   });
 
   io.use(async (socket, next) => {
-    // 1. Try JWT Auth (CRM Agent)
+    
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
     if (token) {
       try {
@@ -33,7 +33,7 @@ const initSocket = (httpServer) => {
       }
     }
 
-    // 2. Try Public Auth (Customer Widget)
+    
     const apiKey = socket.handshake.auth?.apiKey || socket.handshake.query?.apiKey;
     const ticketNo = socket.handshake.auth?.ticketNo || socket.handshake.query?.ticketNo;
     
@@ -65,7 +65,7 @@ const initSocket = (httpServer) => {
       socket.join(`user:${socket.userId}`);
     } else if (socket.isCustomer) {
       console.log(`Socket connected (Customer): ticket=${socket.ticketNo}, tenant=${socket.tenantId}`);
-      // Only join the specific ticket room to prevent seeing other tickets
+      
       socket.join(`ticket:${socket.ticketId}`);
     }
 

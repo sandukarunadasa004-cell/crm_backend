@@ -58,7 +58,7 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // Role comes from token since user can have different roles in different companies
+    
     const activeRole = decoded.role || user.role;
 
     const rolePerms = await RolePermission.findAll({

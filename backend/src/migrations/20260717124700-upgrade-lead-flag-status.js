@@ -4,12 +4,12 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const tableDesc = await queryInterface.describeTable('crm_leads');
 
-    // Remove old boolean column only if it exists
+    
     if (tableDesc.is_flagged) {
       await queryInterface.removeColumn('crm_leads', 'is_flagged');
     }
 
-    // Add the new ENUM column only if it doesn't exist yet
+    
     if (!tableDesc.flag_status) {
       await queryInterface.addColumn('crm_leads', 'flag_status', {
         type: Sequelize.ENUM('none', 'flagged', 'completed'),

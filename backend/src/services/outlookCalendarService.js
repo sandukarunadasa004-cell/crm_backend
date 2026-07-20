@@ -2,14 +2,14 @@
 
 const { User, CrmActivity } = require('../models');
 
-// We use native fetch since Node 24 is being used
+
 class OutlookCalendarService {
   constructor() {
     this.clientId = process.env.MICROSOFT_CLIENT_ID;
     this.clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
     this.tenantId = process.env.MICROSOFT_TENANT_ID || 'common';
-    // MICROSOFT_REDIRECT_URI must be set in your Railway environment variables
-    // e.g. https://your-backend.up.railway.app/api/public/outlook/callback
+    
+    
     this.redirectUri = process.env.MICROSOFT_REDIRECT_URI;
 
     if (!this.clientId || !this.clientSecret || !this.redirectUri) {
@@ -26,7 +26,7 @@ class OutlookCalendarService {
     url.searchParams.append('redirect_uri', this.redirectUri);
     url.searchParams.append('response_mode', 'query');
     url.searchParams.append('scope', this.scopes.join(' '));
-    url.searchParams.append('state', userId); // Pass userId in state to know who is connecting
+    url.searchParams.append('state', userId); 
     return url.toString();
   }
 
@@ -69,7 +69,7 @@ class OutlookCalendarService {
       throw new Error('No refresh token available');
     }
 
-    // If token is still valid for at least 5 minutes, no need to refresh
+    
     if (user.outlook_token_expiry && user.outlook_token_expiry > new Date(Date.now() + 5 * 60000)) {
       return user.outlook_access_token;
     }
@@ -88,7 +88,7 @@ class OutlookCalendarService {
     });
 
     if (!res.ok) {
-      // If refresh fails, disconnect the user
+      
       user.outlook_access_token = null;
       user.outlook_refresh_token = null;
       user.outlook_token_expiry = null;
@@ -131,7 +131,7 @@ class OutlookCalendarService {
           timeZone: 'UTC'
         },
         end: {
-          // Outlook needs an end time. Defaulting to 1 hour after start
+          
           dateTime: activity.due_at 
             ? new Date(new Date(activity.due_at).getTime() + 60*60*1000).toISOString() 
             : new Date(Date.now() + 60*60*1000).toISOString(),
@@ -205,13 +205,13 @@ class OutlookCalendarService {
       
       const data = await res.json();
       
-      // Transform to match CRM activity structure for the frontend
+      
       return (data.value || []).map(event => ({
-        id: `outlook_${event.id}`, // pseudo id
+        id: `outlook_${event.id}`, 
         outlook_event_id: event.id,
         title: event.subject,
         description: event.bodyPreview,
-        activity_type: 'outlook', // special type for UI rendering
+        activity_type: 'outlook', 
         due_at: event.start?.dateTime,
         isOutlook: true
       }));

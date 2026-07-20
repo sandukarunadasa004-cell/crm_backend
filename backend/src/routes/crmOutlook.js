@@ -7,7 +7,7 @@ const { authenticate } = require('../middleware/auth');
 
 router.use(authenticate);
 
-// Get Outlook connection status
+
 router.get('/status', (req, res) => {
   res.json({
     success: true,
@@ -17,7 +17,7 @@ router.get('/status', (req, res) => {
   });
 });
 
-// Get URL to redirect user to Microsoft Login
+
 router.get('/auth-url', (req, res) => {
   try {
     if (!outlookCalendarService.clientId || !outlookCalendarService.clientSecret || !outlookCalendarService.redirectUri) {
@@ -34,7 +34,7 @@ router.get('/auth-url', (req, res) => {
   }
 });
 
-// Disconnect Outlook
+
 router.delete('/disconnect', async (req, res) => {
   try {
     req.user.outlook_access_token = null;
@@ -49,7 +49,7 @@ router.delete('/disconnect', async (req, res) => {
   }
 });
 
-// Sync (pull) Outlook events (Optional manual trigger, mostly handled in calendar read)
+
 router.post('/sync', async (req, res) => {
   if (!req.user.outlook_connected) {
     return res.status(400).json({ success: false, message: 'Outlook is not connected' });

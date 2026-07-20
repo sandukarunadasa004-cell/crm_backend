@@ -30,7 +30,7 @@ const authController = {
       );
 
       if (result.requiresCompanySelection) {
-        // Step 1 of multi-company login: return list of companies + selection token
+        
         return sendSuccess(res, {
           requiresCompanySelection: true,
           selectionToken: result.selectionToken,
@@ -69,7 +69,7 @@ const authController = {
         return sendError(res, 'Selection token and company ID are required.', 400);
       }
 
-      // Verify selection token
+      
       const jwt = require('jsonwebtoken');
       let decoded;
       try {

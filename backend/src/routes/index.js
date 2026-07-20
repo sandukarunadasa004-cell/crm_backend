@@ -16,10 +16,10 @@ router.get('/health', (req, res) => {
 
 router.use('/auth', authRoutes);
 
-// Public APIs
+
 router.use('/api/public/support', require('./publicSupport'));
 
-// Public Outlook OAuth Callback (Needs to be accessible without auth)
+
 router.get('/api/public/outlook/callback', async (req, res) => {
   const { code, state, error } = req.query;
   const outlookCalendarService = require('../services/outlookCalendarService');
@@ -31,7 +31,7 @@ router.get('/api/public/outlook/callback', async (req, res) => {
   
   try {
     if (code && state) {
-      // state contains userId
+      
       await outlookCalendarService.exchangeCode(code, state);
       return res.redirect(`${FRONTEND_URL}/crm/calendar?outlook_sync=success`);
     }

@@ -8,7 +8,7 @@ const crmLeadService = {
   async getAllLeads({ tenantId, limit, offset, search, status, source, owner_id, userRole, userId }) {
     const whereClause = { tenant_id: tenantId };
 
-    // 'active' is a virtual status meaning all non-converted leads
+    
     if (status === 'active') {
       whereClause.status = { [Op.ne]: 'converted' };
     } else if (status) {
@@ -32,17 +32,17 @@ const crmLeadService = {
       { model: User, as: 'assignees', attributes: ['id', 'first_name', 'last_name', 'email'], through: { attributes: [] } }
     ];
 
-    // RBAC: If the user is not an admin or manager, restrict leads to those they own or are assigned to.
+    
     if (userRole && !['admin', 'manager'].includes(userRole) && userId) {
-      // Find all lead IDs assigned to this user in the junction table
+      
       const assignedLeadRows = await CrmLeadAssignee.findAll({
         where: { user_id: userId, tenant_id: tenantId },
         attributes: ['lead_id']
       });
       const assignedLeadIds = assignedLeadRows.map(r => r.lead_id);
 
-      // Add to whereClause: owner_id is me OR id is in assignedLeadIds
-      // If there's an existing Op.or (from search), we use Op.and
+      
+      
       const accessCondition = {
         [Op.or]: [
           { owner_id: userId },
@@ -114,10 +114,10 @@ const crmLeadService = {
       created_by: userId
     });
 
-    // Save assignees if provided
+    
     if (Array.isArray(assignee_ids) && assignee_ids.length > 0) {
       const assigneeRows = assignee_ids
-        .filter(uid => uid && uid !== (owner_id || userId)) // exclude owner from assignees list
+        .filter(uid => uid && uid !== (owner_id || userId)) 
         .map(uid => ({ lead_id: newLead.id, user_id: uid, tenant_id: tenantId }));
       if (assigneeRows.length > 0) {
         await CrmLeadAssignee.bulkCreate(assigneeRows, { ignoreDuplicates: true });
@@ -140,7 +140,7 @@ const crmLeadService = {
     const lead = await CrmLead.findOne({ where: { id: leadId, tenant_id: tenantId } });
     if (!lead) throw new Error('Lead not found.');
 
-    // Extract assignee_ids before stripping from the model update
+    
     const { assignee_ids, ...modelData } = updateData;
 
     delete modelData.id;
@@ -156,7 +156,7 @@ const crmLeadService = {
     const beforeData = lead.toJSON();
     await lead.update(modelData);
 
-    // Replace all assignees if assignee_ids was provided in the payload
+    
     if (Array.isArray(assignee_ids)) {
       await CrmLeadAssignee.destroy({ where: { lead_id: leadId } });
       if (assignee_ids.length > 0) {

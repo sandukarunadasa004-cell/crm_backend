@@ -13,8 +13,8 @@ const path = require('path');
 
 const app = express();
 
-// ─── CORS must be FIRST — before helmet and everything else ───────────────────
-// Support multiple comma-separated origins in CORS_ORIGIN env variable
+
+
 const allowedOrigins = (config.cors.origin || 'https://billify-crm-frontend.vercel.app')
   .split(',')
   .map(o => o.trim())
@@ -32,7 +32,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID'],
 };
 
-// ─── CORS must be FIRST — before helmet and everything else ───────────────────
+
 const dynamicCors = (req, res, next) => {
   if (req.path.startsWith('/api/public')) {
     cors({ origin: '*' })(req, res, next);
@@ -43,7 +43,7 @@ const dynamicCors = (req, res, next) => {
 
 app.options('*', dynamicCors);
 app.use(dynamicCors);
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 app.use(helmet());
 

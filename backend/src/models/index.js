@@ -106,7 +106,7 @@ const db = {
 Tenant.hasMany(User, { foreignKey: 'business_id', as: 'users' });
 User.belongsTo(Tenant, { foreignKey: 'business_id', as: 'tenant' });
 
-// Many-to-many: users can belong to multiple tenants
+
 User.belongsToMany(Tenant, { through: UserTenant, foreignKey: 'user_id', otherKey: 'tenant_id', as: 'companies' });
 Tenant.belongsToMany(User, { through: UserTenant, foreignKey: 'tenant_id', otherKey: 'user_id', as: 'members' });
 UserTenant.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -138,7 +138,7 @@ CrmLead.belongsTo(CrmCustomer, { foreignKey: 'customer_id', as: 'customer' });
 CrmLead.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
 CrmCustomer.hasMany(CrmLead, { foreignKey: 'customer_id', as: 'leads' });
 
-// Lead assignees (Many-to-Many)
+
 CrmLead.belongsToMany(User, { through: CrmLeadAssignee, foreignKey: 'lead_id', otherKey: 'user_id', as: 'assignees' });
 User.belongsToMany(CrmLead, { through: CrmLeadAssignee, foreignKey: 'user_id', otherKey: 'lead_id', as: 'assignedLeads' });
 CrmLeadAssignee.belongsTo(CrmLead, { foreignKey: 'lead_id', as: 'lead' });
