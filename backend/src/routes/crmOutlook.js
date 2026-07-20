@@ -16,8 +16,19 @@ router.get('/status', (req, res) => {
 
 // Get URL to redirect user to Microsoft Login
 router.get('/auth-url', (req, res) => {
-  const url = outlookCalendarService.getAuthUrl(req.user.id);
-  res.json({ success: true, url });
+  try {
+    if (!outlookCalendarService.clientId || !outlookCalendarService.clientSecret || !outlookCalendarService.redirectUri) {
+      return res.status(503).json({
+        success: false,
+        message: 'Outlook integration is not configured. Please set MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, and MICROSOFT_REDIRECT_URI in your environment variables.'
+      });
+    }
+    const url = outlookCalendarService.getAuthUrl(req.user.id);
+    res.json({ success: true, url });
+  } catch (error) {
+    console.error('Error generating Outlook auth URL:', error);
+    res.status(500).json({ success: false, message: 'Failed to generate Outlook login URL.' });
+  }
 });
 
 // Disconnect Outlook
