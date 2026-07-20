@@ -69,19 +69,15 @@ async function seedAdmin({ businessName, email, password }) {
     console.log(`  [CREATED] Super Admin: ${email}`);
   }
 
-  // 3. Ensure user is linked to their tenant
-  const existing = await UserTenant.findOne({ where: { user_id: user.id, tenant_id: tenant.id } });
-  if (!existing) {
-    await UserTenant.create({
-      user_id:   user.id,
-      tenant_id: tenant.id,
-      role:      'super_admin',
-      is_active: true,
-    });
-    console.log(`  [LINKED]  User → Business in user_tenants`);
-  } else {
-    console.log(`  [OK]      User already linked to business`);
-  }
+  // 3. Ensure user is linked ONLY to their designated tenant (remove stale links)
+  await UserTenant.destroy({ where: { user_id: user.id } });
+  await UserTenant.create({
+    user_id:   user.id,
+    tenant_id: tenant.id,
+    role:      'super_admin',
+    is_active: true,
+  });
+  console.log(`  [LINKED]  User → "${businessName}" only (stale links removed)`);
 
   // 4. Seed default deal pipeline stages if none exist for this tenant
   const existingStages = await CrmDealStage.count({ where: { tenant_id: tenant.id } });
