@@ -11,6 +11,7 @@ module.exports = (sequelize) => {
     is_public: { type: DataTypes.BOOLEAN, defaultValue: false },
     is_pinned: { type: DataTypes.BOOLEAN, defaultValue: false },
     completed_at: { type: DataTypes.DATE, allowNull: true },
+    custom_fields: { type: DataTypes.JSON, allowNull: true },
   }, {
     tableName: 'crm_todos',
     indexes: [
