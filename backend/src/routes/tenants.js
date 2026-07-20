@@ -14,5 +14,6 @@ const requireAdmin = (req, res, next) => {
 };
 
 router.post('/', authenticate, requireAdmin, tenantController.createTenant);
+router.delete('/:id', authenticate, requireAdmin, tenantController.deleteTenant);
 
 module.exports = router;

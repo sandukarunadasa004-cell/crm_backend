@@ -57,6 +57,38 @@ const tenantController = {
       console.error('Error creating company:', error);
       return sendError(res, 'Failed to create company.', 500);
     }
+  },
+
+  async deleteTenant(req, res) {
+    try {
+      const { id } = req.params;
+      
+      // Don't allow deleting the primary system business (usually seeded)
+      // or at least prevent if it's the very first one, but for now just check if it exists
+      const tenant = await Tenant.findOne({ where: { id } });
+      if (!tenant) {
+        return sendError(res, 'Company not found.', 404);
+      }
+      
+      // Perform soft delete
+      await tenant.update({ is_active: false });
+
+      await logAudit({
+        tenantId: tenant.id,
+        userId: req.user.id,
+        action: 'delete',
+        entityType: 'tenant',
+        entityId: tenant.id,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        description: `Soft deleted company: ${tenant.name}`,
+      });
+
+      return sendSuccess(res, null, 'Company deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      return sendError(res, 'Failed to delete company.', 500);
+    }
   }
 };
 
