@@ -5,14 +5,16 @@ const { User, CrmActivity } = require('../models');
 // We use native fetch since Node 24 is being used
 class OutlookCalendarService {
   constructor() {
-    // You should put these in your .env
-    this.clientId = process.env.MICROSOFT_CLIENT_ID || '0e564390-2007-400e-a2a5-363b19aa5b31';
-    this.clientSecret = process.env.MICROSOFT_CLIENT_SECRET || ''; // Needs to be added to .env
+    this.clientId = process.env.MICROSOFT_CLIENT_ID;
+    this.clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
     this.tenantId = process.env.MICROSOFT_TENANT_ID || 'common';
-    
-    // Construct dynamic redirect URI based on APP_URL
-    const appUrl = process.env.APP_URL;
-    this.redirectUri = process.env.MICROSOFT_REDIRECT_URI || `${appUrl}/api/public/outlook/callback`;
+    // MICROSOFT_REDIRECT_URI must be set in your Railway environment variables
+    // e.g. https://your-backend.up.railway.app/api/public/outlook/callback
+    this.redirectUri = process.env.MICROSOFT_REDIRECT_URI;
+
+    if (!this.clientId || !this.clientSecret || !this.redirectUri) {
+      console.warn('[OutlookCalendar] Missing required env vars: MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, MICROSOFT_REDIRECT_URI');
+    }
     
     this.scopes = ['offline_access', 'Calendars.ReadWrite', 'User.Read'];
   }
