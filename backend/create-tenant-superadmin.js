@@ -1,14 +1,10 @@
 /**
- * One-time script: Create or reset a Super Admin for a given business.
+ * Seed script: Creates or resets BOTH super admins.
  * Run with: node create-tenant-superadmin.js
- * 
- * HOW IT WORKS:
- *  - If the email already exists → password is RESET to the one below.
- *  - If the email does not exist → user is CREATED.
- *  - If the business does not exist → business is CREATED.
- * 
- * One super admin = one business owner. Each owner manages their own:
- *   companies, staff, customers, leads, deals — all fully isolated.
+ *
+ * Each super admin gets their own isolated business.
+ * If the user already exists → password is RESET.
+ * If the user does not exist → user is CREATED.
  */
 'use strict';
 
@@ -16,45 +12,53 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config({ path: './.env' });
 
-// ─── EDIT THESE to create or reset a super admin ────────────────────────────
-const BUSINESS_NAME   = 'test-business-2';        // Slug-style name
-const EMAIL           = 'superadmin2@billify.lk';  // Login email
-const PASSWORD        = 'Admin@123';               // Login password
+// ─── SUPER ADMINS TO SEED ────────────────────────────────────────────────────
+const ADMINS = [
+  {
+    businessName: 'billify-business-1',
+    email:        'superadmin@billify.lk',
+    password:     'Admin@123',
+  },
+  {
+    businessName: 'billify-business-2',
+    email:        'superadmin2@billify.lk',
+    password:     'Admin@123',
+  },
+];
 // ────────────────────────────────────────────────────────────────────────────
 
-async function run() {
-  const { User, Tenant, UserTenant, sequelize } = require('./src/models');
+async function seedAdmin({ businessName, email, password }) {
+  const { User, Tenant, UserTenant } = require('./src/models');
 
-  // 1. Find or create the business (tenant)
-  let tenant = await Tenant.findOne({ where: { name: BUSINESS_NAME } });
+  console.log(`\n── Processing: ${email} ──────────────────────`);
+
+  // 1. Find or create the business
+  let tenant = await Tenant.findOne({ where: { name: businessName } });
   if (!tenant) {
-    tenant = await Tenant.create({ id: uuidv4(), name: BUSINESS_NAME, is_active: true });
-    console.log(`[CREATED] Business: "${BUSINESS_NAME}" (${tenant.id})`);
+    tenant = await Tenant.create({ id: uuidv4(), name: businessName, is_active: true });
+    console.log(`  [CREATED] Business: "${businessName}"`);
   } else {
-    console.log(`[FOUND]   Business: "${BUSINESS_NAME}" (${tenant.id})`);
+    console.log(`  [FOUND]   Business: "${businessName}"`);
   }
 
   const salt = await bcrypt.genSalt(12);
-  const hashedPassword = await bcrypt.hash(PASSWORD, salt);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
   // 2. Find or create the user
-  let user = await User.findOne({ where: { email: EMAIL } });
-
+  let user = await User.findOne({ where: { email } });
   if (user) {
-    // Reset password and ensure they are a super_admin for this business
-    user.password     = hashedPassword;
-    user.business_id  = tenant.id;
-    user.role         = 'super_admin';
-    user.is_active    = true;
+    user.password    = hashedPassword;
+    user.business_id = tenant.id;
+    user.role        = 'super_admin';
+    user.is_active   = true;
     await user.save();
-    console.log(`[UPDATED] Password reset for: ${EMAIL}`);
+    console.log(`  [UPDATED] Password reset for: ${email}`);
   } else {
-    // Create new user — name is derived from email prefix if not set
-    const emailPrefix = EMAIL.split('@')[0];
+    const emailPrefix = email.split('@')[0];
     user = await User.create({
       id:          uuidv4(),
       business_id: tenant.id,
-      email:       EMAIL,
+      email,
       first_name:  emailPrefix,
       last_name:   '',
       password:    hashedPassword,
@@ -62,10 +66,10 @@ async function run() {
       is_active:   true,
       status:      'active',
     });
-    console.log(`[CREATED] Super Admin: ${EMAIL}`);
+    console.log(`  [CREATED] Super Admin: ${email}`);
   }
 
-  // 3. Link user to tenant in UserTenant table (multi-company support)
+  // 3. Ensure user is linked to their tenant
   const existing = await UserTenant.findOne({ where: { user_id: user.id, tenant_id: tenant.id } });
   if (!existing) {
     await UserTenant.create({
@@ -74,12 +78,27 @@ async function run() {
       role:      'super_admin',
       is_active: true,
     });
-    console.log(`[LINKED]  User → Business in user_tenants table`);
+    console.log(`  [LINKED]  User → Business in user_tenants`);
+  } else {
+    console.log(`  [OK]      User already linked to business`);
   }
 
-  console.log('\n✅ Done!');
-  console.log(`   Email   : ${EMAIL}`);
-  console.log(`   Password: ${PASSWORD}`);
+  console.log(`  ✅ Login: ${email} / ${password}`);
+}
+
+async function run() {
+  const { sequelize } = require('./src/models');
+  console.log('Connecting to database...');
+  await sequelize.authenticate();
+  console.log('Connected!\n');
+
+  for (const admin of ADMINS) {
+    await seedAdmin(admin);
+  }
+
+  console.log('\n══════════════════════════════════════════════');
+  console.log('✅ All super admins are ready!');
+  console.log('══════════════════════════════════════════════');
   process.exit(0);
 }
 
