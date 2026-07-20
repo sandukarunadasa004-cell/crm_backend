@@ -3,6 +3,9 @@
 const express = require('express');
 const router = express.Router();
 const outlookCalendarService = require('../services/outlookCalendarService');
+const { authenticate } = require('../middleware/auth');
+
+router.use(authenticate);
 
 // Get Outlook connection status
 router.get('/status', (req, res) => {
