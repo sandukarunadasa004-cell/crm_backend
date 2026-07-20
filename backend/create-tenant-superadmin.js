@@ -24,6 +24,11 @@ const ADMINS = [
     email:        'superadmin2@billify.lk',
     password:     'Admin@123',
   },
+  {
+    businessName: 'billify-business-3',
+    email:        'superadmin3@billify.lk',
+    password:     'Admin@123',
+  },
 ];
 // ────────────────────────────────────────────────────────────────────────────
 
