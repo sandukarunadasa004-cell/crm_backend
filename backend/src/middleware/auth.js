@@ -35,7 +35,7 @@ const authenticate = async (req, res, next) => {
     }
 
     const user = await User.findOne({
-      where: { id: decoded.userId, business_id: decoded.tenantId, status: 'active' },
+      where: { id: decoded.userId, status: 'active' },
     });
 
     if (!user) {
@@ -45,8 +45,10 @@ const authenticate = async (req, res, next) => {
       });
     }
 
+    const activeTenantId = decoded.tenantId;
+
     const tenant = await Tenant.findOne({
-      where: { id: user.business_id },
+      where: { id: activeTenantId },
     });
 
     if (!tenant || !tenant.is_active) {
@@ -56,9 +58,11 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    
+    // Role comes from token since user can have different roles in different companies
+    const activeRole = decoded.role || user.role;
+
     const rolePerms = await RolePermission.findAll({
-      where: { role: user.role, business_id: user.business_id }
+      where: { role: activeRole, business_id: activeTenantId }
     });
     
     const permissionSet = new Set();
@@ -69,12 +73,12 @@ const authenticate = async (req, res, next) => {
     
     req.user = {
       id: user.id,
-      tenantId: user.business_id, 
+      tenantId: activeTenantId, 
       email: user.email,
       firstName: user.name, 
       lastName: '',
-      role: user.role,
-      roles: [user.role], 
+      role: activeRole,
+      roles: [activeRole], 
       permissions: permissionSet,
       tenant: tenant,
     };

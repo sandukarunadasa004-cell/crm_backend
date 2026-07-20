@@ -56,6 +56,7 @@ const CrmShopProfile = require('./CrmShopProfile')(sequelize);
 const Product = require('./Product')(sequelize);
 const CrmTodo = require('./CrmTodo')(sequelize);
 const CrmLeadAssignee = require('./CrmLeadAssignee')(sequelize);
+const UserTenant = require('./UserTenant')(sequelize);
 
 const Bill = require('./pos/Bill')(sequelize);
 const BillPayment = require('./pos/BillPayment')(sequelize);
@@ -93,6 +94,7 @@ const db = {
   Product,
   CrmTodo,
   CrmLeadAssignee,
+  UserTenant,
   Bill,
   BillPayment,
   BillItem,
@@ -103,6 +105,12 @@ const db = {
 
 Tenant.hasMany(User, { foreignKey: 'business_id', as: 'users' });
 User.belongsTo(Tenant, { foreignKey: 'business_id', as: 'tenant' });
+
+// Many-to-many: users can belong to multiple tenants
+User.belongsToMany(Tenant, { through: UserTenant, foreignKey: 'user_id', otherKey: 'tenant_id', as: 'companies' });
+Tenant.belongsToMany(User, { through: UserTenant, foreignKey: 'tenant_id', otherKey: 'user_id', as: 'members' });
+UserTenant.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+UserTenant.belongsTo(Tenant, { foreignKey: 'tenant_id', as: 'tenant' });
 
 User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refreshTokens' });
 RefreshToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
