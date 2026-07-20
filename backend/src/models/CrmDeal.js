@@ -71,6 +71,12 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    custom_fields: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'JSON object storing custom field values',
+    },
     products_interest: {
       type: DataTypes.JSON,
       allowNull: true,

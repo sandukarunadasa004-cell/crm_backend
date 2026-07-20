@@ -25,6 +25,12 @@ module.exports = (sequelize) => {
     closed_at: { type: DataTypes.DATE, allowNull: true },
     created_by: {
       type: DataTypes.UUID, allowNull: true, references: { model: 'users', key: 'id' } },
+    custom_fields: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'JSON object storing custom field values',
+    },
   }, {
     tableName: 'crm_tickets',
     indexes: [

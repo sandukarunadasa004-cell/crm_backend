@@ -14,7 +14,7 @@ module.exports = (sequelize) => {
       allowNull: false,
     },
     entity_type: {
-      type: DataTypes.ENUM('customer', 'lead', 'deal'),
+      type: DataTypes.ENUM('customer', 'lead', 'deal', 'ticket', 'quote'),
       allowNull: false,
     },
     field_name: {

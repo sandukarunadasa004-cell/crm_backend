@@ -84,6 +84,12 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    custom_fields: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {},
+      comment: 'JSON object storing custom field values',
+    },
     created_by: {
       type: DataTypes.UUID,
       allowNull: true,
