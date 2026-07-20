@@ -28,7 +28,7 @@ const ADMINS = [
 // ────────────────────────────────────────────────────────────────────────────
 
 async function seedAdmin({ businessName, email, password }) {
-  const { User, Tenant, UserTenant } = require('./src/models');
+  const { User, Tenant, UserTenant, CrmDealStage } = require('./src/models');
 
   console.log(`\n── Processing: ${email} ──────────────────────`);
 
@@ -81,6 +81,26 @@ async function seedAdmin({ businessName, email, password }) {
     console.log(`  [LINKED]  User → Business in user_tenants`);
   } else {
     console.log(`  [OK]      User already linked to business`);
+  }
+
+  // 4. Seed default deal pipeline stages if none exist for this tenant
+  const existingStages = await CrmDealStage.count({ where: { tenant_id: tenant.id } });
+  if (existingStages === 0) {
+    const defaultStages = [
+      { name: 'Lead In',        sort_order: 1, probability_default: 10,  is_won_stage: false, is_lost_stage: false, color: '#6366f1' },
+      { name: 'Contact Made',   sort_order: 2, probability_default: 25,  is_won_stage: false, is_lost_stage: false, color: '#3b82f6' },
+      { name: 'Proposal Sent',  sort_order: 3, probability_default: 50,  is_won_stage: false, is_lost_stage: false, color: '#f59e0b' },
+      { name: 'Negotiation',    sort_order: 4, probability_default: 75,  is_won_stage: false, is_lost_stage: false, color: '#f97316' },
+      { name: 'Won',            sort_order: 5, probability_default: 100, is_won_stage: true,  is_lost_stage: false, color: '#10b981' },
+      { name: 'Lost',           sort_order: 6, probability_default: 0,   is_won_stage: false, is_lost_stage: true,  color: '#ef4444' },
+    ];
+
+    for (const s of defaultStages) {
+      await CrmDealStage.create({ id: uuidv4(), tenant_id: tenant.id, ...s });
+    }
+    console.log(`  [SEEDED]  6 default pipeline stages created`);
+  } else {
+    console.log(`  [OK]      Pipeline stages already exist (${existingStages} stages)`);
   }
 
   console.log(`  ✅ Login: ${email} / ${password}`);
