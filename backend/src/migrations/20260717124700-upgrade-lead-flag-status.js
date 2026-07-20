@@ -2,27 +2,36 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Drop the old boolean column
-    await queryInterface.removeColumn('crm_leads', 'is_flagged');
+    const tableDesc = await queryInterface.describeTable('crm_leads');
 
-    // Add the new ENUM column
-    await queryInterface.addColumn('crm_leads', 'flag_status', {
-      type: Sequelize.ENUM('none', 'flagged', 'completed'),
-      allowNull: false,
-      defaultValue: 'none',
-    });
+    // Remove old boolean column only if it exists
+    if (tableDesc.is_flagged) {
+      await queryInterface.removeColumn('crm_leads', 'is_flagged');
+    }
+
+    // Add the new ENUM column only if it doesn't exist yet
+    if (!tableDesc.flag_status) {
+      await queryInterface.addColumn('crm_leads', 'flag_status', {
+        type: Sequelize.ENUM('none', 'flagged', 'completed'),
+        allowNull: false,
+        defaultValue: 'none',
+      });
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Revert ENUM column
-    await queryInterface.removeColumn('crm_leads', 'flag_status');
+    const tableDesc = await queryInterface.describeTable('crm_leads');
 
-    // Note: We'd need to drop the ENUM type in Postgres, but Sequelize handles it natively in some dialects.
-    // Re-add boolean column
-    await queryInterface.addColumn('crm_leads', 'is_flagged', {
-      type: Sequelize.BOOLEAN,
-      allowNull: false,
-      defaultValue: false,
-    });
+    if (tableDesc.flag_status) {
+      await queryInterface.removeColumn('crm_leads', 'flag_status');
+    }
+
+    if (!tableDesc.is_flagged) {
+      await queryInterface.addColumn('crm_leads', 'is_flagged', {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      });
+    }
   }
 };
