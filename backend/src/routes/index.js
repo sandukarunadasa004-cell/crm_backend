@@ -19,7 +19,7 @@ router.use('/auth', authRoutes);
 // Public APIs
 router.use('/api/public/support', require('./publicSupport'));
 
-router.use('/api/tenants', require('./tenants'));
+router.use('/tenants', require('./tenants'));
 
 router.use('/crm/dashboard', require('./crmDashboard'));
 router.use('/crm/customers', require('./crmCustomers'));
